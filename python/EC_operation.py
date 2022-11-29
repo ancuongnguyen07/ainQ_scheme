@@ -1,11 +1,9 @@
-# This file is provided by the course staff
+# This file is provided by the course staffs
 
 ### ====================== Implements Point addition and Scalar Multiplication ========== ###
 
 from dataclasses import dataclass
 from re import I
-from random import randint
-import sys
 
 @dataclass
 class PrimeGaloisField:
@@ -39,7 +37,7 @@ class FieldElement:
             field=self.field
         )
 
-    def __rmul__(self, scalar: int) -> "FieldValue":
+    def __rmul__(self, scalar: int) -> "FieldElement":
         return FieldElement(
             value=(self.value * scalar) % self.P,
             field=self.field
@@ -126,7 +124,7 @@ class ECCPoint:
             return self.__class__(
                 x = x3.value,
                 y = y3.value,
-                curve = curve256k1
+                curve = self.curve ### ??? author put here curve256k1 
             )
 
         if self == other and self.y == inf:
@@ -142,7 +140,7 @@ class ECCPoint:
             return self.__class__(
                 x = x3.value,
                 y = y3.value,
-                curve = curve256k1
+                curve = self.curve ### ???
             )
 
     ##  ======== Scalar Multiplication x * P1 = P1 ============== ##
