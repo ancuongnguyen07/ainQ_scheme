@@ -1,28 +1,25 @@
 from dataclasses import dataclass
 from drone import Drone
+from EC_operation import ECCPoint
+from common_parameters import Parameters
+from team_leader import Leader
 
 @dataclass
 class Edge_Drone(Drone):
     '''Class holding edge drone'''
 
-    def __full_key_gen__(self):
-        '''
-        Run by each edge drone
-        Generate full key pair for each drone
-        in the format: (partial_key, key)
-        '''
-        assert self.R_i != None
-        assert self.P_i != None
-        assert self.x_i != None
-        assert self.s_i != None
+    K_g: int # group key
+    q_k: Leader # team leader
 
-        # full private key
-        full_priv_key = (self.s_i, self.x_i)
+    def __assign_leader__(self, leader: Leader):
+        self.q_k = leader
 
-        # full public key
-        full_pub_key = (self.R_i, self.P_i)
-
-        return full_priv_key, full_pub_key
-
-    def __key_retrieval__():
+    def __key_retrieval__(self,V: ECCPoint,cipher_list, common_para: Parameters, t_g):
         '''Run by each edge drone d_i'''
+        T_i = V.__rmul__(self.x_i + self.s_i)
+        h1_hash_feed = ','.join(list(map(str, [V,T_i,self.q_k.id,self.q_k.R_i,self.q_k.P_i,
+                                                self.id,self.R_i,self.P_i,t_g])))
+        K_g = cipher_list[self] ^ Parameters.H1(h1_hash_feed)
+
+        self.K_g = K_g
+        return K_g
