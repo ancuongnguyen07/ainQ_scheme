@@ -1,19 +1,19 @@
 from dataclasses import dataclass
-from random import randint
 import EC_operation as ec
+from random import randint
 import common_parameters as para
-import edge_drone as drone
 from typing import List
+from drone import Drone
 
 @dataclass
-class Leader(drone.Edge_Drone):
+class Leader(Drone):
     '''Class holding a team leader drone'''
     # x_i: int # secret value
     # P_i: ec.ECCPoint # public key
 
-    drone_list: List[drone.Edge_Drone]
+    drone_list: List[Drone]
 
-    def __register_drone__(self, edge_drone: drone.Edge_Drone):
+    def __register_drone__(self, edge_drone: Drone):
         '''Append a given drone to its drone list'''
         assert edge_drone != None
         self.drone_list.append(edge_drone)
@@ -39,7 +39,7 @@ class Leader(drone.Edge_Drone):
 
     #     return x_i, P_i
 
-    def gen_group_key(self, common_para: para.Parameters, t: int):
+    def __gen_group_key__(self, common_para: para.Parameters, t: int):
         '''
         Run by team leader
         Generate a symmetric group session key
