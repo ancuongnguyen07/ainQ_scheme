@@ -4,6 +4,8 @@ import EC_operation as ec
 
 @dataclass
 class Edge_Drone:
+    '''Class holding edge drone'''
+    id: str
     x_i: int # secret value
     P_i: ec.ECCPoint # public key
     s_i: int # partial secret key
@@ -45,3 +47,6 @@ class Edge_Drone:
         full_pub_key = (self.R_i, self.P_i)
 
         return full_priv_key, full_pub_key
+
+    def __key_retrieval__():
+        '''Run by each edge drone d_i'''
