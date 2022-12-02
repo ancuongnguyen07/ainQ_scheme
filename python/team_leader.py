@@ -3,7 +3,9 @@ import EC_operation as ec
 from random import randint
 from common_parameters import Parameters
 from typing import List
+from typing import Dict
 from drone import Drone
+from edge_drone import Edge_Drone
 from EC_operation import ECCPoint
 
 @dataclass
@@ -15,8 +17,12 @@ class Leader(Drone):
     K_g: int # group key
     l_k: int # random number for distributing group key
     V: ECCPoint
+    Y_i_list: Dict[Edge_Drone, ECCPoint]
 
     drone_list: List[Drone]
+
+    def __random_number__(self):
+        return randint(1,10000000)
 
     def __register_drone__(self, edge_drone: Drone):
         '''Append a given drone to its drone list'''
@@ -84,6 +90,9 @@ class Leader(Drone):
             # ----- STEP 4
             h0_hash_feed = ','.join(list(map(str, [drone.id, R_i, P_i])))
             Y_i = P_i.__add__(R_i.__add__(P_pub.__rmul__(H0(h0_hash_feed))))
+
+            self.Y_i_list[drone] = Y_i
+            
             T_i = Y_i.__rmul__(l_k)
             h1_hash_feed = ','.join(list(map(str, [V,T_i,self.id,self.R_i,self.P_i,
                                                 drone.id,drone.R_i,drone.P_i,t])))
@@ -93,7 +102,7 @@ class Leader(Drone):
         return V, cipher_lists
 
     def __re_key__(self, common_para: Parameters, new_drone: Drone, t: int):
-        '''Re-generate group key whenever a new drone join or an
+        '''Re-generate group key whenever a new drone joins or an
         existing drone leaves'''
 
         q,P_pub,H0,H1 = common_para.q, common_para.P_pub,common_para.H0,common_para.H1

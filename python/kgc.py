@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from random import randint
 import EC_operation as ec
-import common_parameters as para
-import edge_drone as drone
+from common_parameters import Parameters
+from edge_drone import Edge_Drone
 
 @dataclass
 class KGC:
@@ -57,12 +57,12 @@ class KGC:
         H1 = hash.HASH_FUNC_DICT['H1']
 
         # package all parameters into a class holder
-        common_para = para.Parameters(x,G,q,P_pub,H0,H1,I,P)
+        common_para = Parameters(x,G,q,P_pub,H0,H1,I,P)
 
         return common_para
 
-    def __gen_partial_key__(common_para: para.Parameters,
-                            d_i: drone.Edge_Drone,P_i: ec.ECCPoint):
+    def __gen_partial_key__(common_para: Parameters,
+                            id_d_i: str,P_i: ec.ECCPoint):
         '''
         Run by KGC
         Generate a partial key pair for each drone d_i
@@ -80,11 +80,11 @@ class KGC:
 
         # ---- STEP 3
         # partial secret key
-        hash_feed = ','.join(list(map(str, [d_i, R_i, P_i])))
-        s_i = r_i + x*H0(hash_feed) % q
+        hash_feed = ','.join(list(map(str, [id_d_i, R_i, P_i])))
+        s_i = r_i + x * H0(hash_feed) % q
 
         # save R_i and s_i into variables of class Edge_Drone d_i
-        d_i.s_i = s_i
-        d_i.R_i = R_i
+        # d_i.s_i = s_i
+        # d_i.R_i = R_i
 
-        return R_i, s_i 
+        return R_i, s_i

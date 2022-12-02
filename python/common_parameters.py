@@ -6,7 +6,7 @@ import types
 class Parameters:
     '''Class holding common parameters of the AinQ scheme'''
 
-    x: int
+    x: int # master secret key
     G: ec.ECCPoint
     q: int
     P_pub: ec.ECCPoint

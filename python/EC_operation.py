@@ -154,3 +154,20 @@ class ECCPoint:
             inPoint = inPoint + inPoint
             scalar >>= 1
         return outPoint
+
+P: int = (
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+)
+
+field = PrimeGaloisField(prime=P)
+
+A: int = 0
+B: int = 7
+
+curve256k1 = EllipticCurve(
+    a=A,
+    b=B,
+    field=field
+)   
+
+I = ECCPoint(x = None, y = None, curve = curve256k1)    # where I is a point at Infinity
