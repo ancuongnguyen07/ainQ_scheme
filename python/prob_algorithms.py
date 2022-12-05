@@ -5,55 +5,6 @@ from random import randint
 
 # 7 probabilistic algorithns
 
-
-def gen_secret_value(q,G):
-    '''
-    Run by each edge drone and a team leader
-    Generate a pair of secret/public key for each edge drone d_i or team leader
-    '''
-    # ---- STEP 1
-    # generate a secret key
-    x_i = randint(0,q)
-
-    # ---- STEP 2
-    # compute corresponding public key
-    P_i = G.__rmul__(x_i)
-
-    return x_i, P_i
-
-def full_key_gen(x_i,s_i,P_i,R_i):
-    '''
-    Run by each edge drone
-    Generate full key pair for each drone
-    in the format: (partial_key, key)
-    '''
-    # full private key
-    full_priv_key = (s_i, x_i)
-
-    # full public key
-    full_pub_key = (R_i, P_i)
-
-    return full_priv_key, full_pub_key
-
-def gen_group_key(q,G,drone_list):
-    '''
-    Run by team leader
-    Generate a symmetric group session key
-    '''
-    # ----- STEP 1
-    K_g = randint(0,q)
-    l_k = randint(0,q)
-
-    # ----- STEP 2
-    V = G.__rmul__(l_k)
-
-    # ----- STEP 3
-    for drone in drone_list:
-
-
-def key_retrieval():
-    pass
-
 def re_key():
     pass
 

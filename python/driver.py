@@ -59,11 +59,16 @@ def main():
     V, cipher_list = leader.__gen_group_key__(sys_parameters, t_g)
 
     ## sign and verify the message m1
+    
     # need to be implemented in a separate file the sign/verify protocol
-    # mess_to_be_signed = ','.join(list(map(str, [r1,V,leader.K_g])))
+    mess_to_be_signed = ','.join(list(map(str, [r1,V,leader.K_g])))
+    signature_r, signature_s = leader.__sign_mess__(mess_to_be_signed, sys_parameters)
 
     ## key retrieval
     for edge_drone in drone_list:
+        is_valid_signature = edge_drone.__verify_mess__(mess_to_be_signed, signature_r, signature_s,
+                                    leader.P_i, sys_parameters)
+        assert is_valid_signature == True
         edge_drone.__key_retrieval__(V,cipher_list,t_g, sys_parameters)
 
     # ====================== Group Re-Key
@@ -78,11 +83,21 @@ def main():
 
     ## update the group list then run the Re-key algorithms
     leader.__register_drone__(new_drone)
+    r2 = leader.__random_number__()
     t_g = int(time.time())
     V, cipher_list = leader.__gen_group_key__(sys_parameters, t_g)
 
+    ## sign and verify the message m2
+    
+    # need to be implemented in a separate file the sign/verify protocol
+    mess_to_be_signed = ','.join(list(map(str, [r2,V,leader.K_g])))
+    signature_r, signature_s = leader.__sign_mess__(mess_to_be_signed, sys_parameters)
+
     ## key retrieval
     for edge_drone in leader.drone_list:
+        is_valid_signature = edge_drone.__verify_mess__(mess_to_be_signed, signature_r, signature_s,
+                                    leader.P_i, sys_parameters)
+        assert is_valid_signature == True
         edge_drone.__key_retrieval__(V,cipher_list,t_g, sys_parameters)
 
 

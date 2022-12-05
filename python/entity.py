@@ -6,6 +6,7 @@ from EC_operation import ECCPoint
 from typing import Dict
 from typing import List
 import hash_func as hash
+import eec
 
 ### ====================== KGC CLASS
 
@@ -140,6 +141,69 @@ class Drone:
         full_pub_key = (self.R_i, self.P_i)
 
         return full_priv_key, full_pub_key
+
+    def __sign_mess__(self,mess: str, sys_para: Parameters):
+        '''Sign a message using ECDSA
+        Reference: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm#Signature_generation_algorithm'''
+        
+        # order n of base point
+        n = sys_para.q
+        # hash output of the message
+        z = e = hash.H1(mess)
+        
+        while True:
+            # ----- STEP 3
+            k = randint(1,n)
+            new_point = sys_para.G.__rmul__(k)
+            x1 = new_point.x.value
+
+            r = x1 % n
+            if r == 0:
+                # if r == 0 go back to STEP 3
+                continue
+
+            inverse_k = eec.mod_inverse(k,n)
+            s = (inverse_k * (z + r * self.x_i)) % n
+            if s != 0:
+                # if s == 0 go back to STEP 3
+                # else break the loop
+                break
+        
+        return r,s
+
+    def __verify_mess__(self, mess: str, r: int,s: int ,public_key: ECCPoint,
+                        sys_para: Parameters):
+        '''Verify a signed message using ECDSA
+        Reference: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm#Signature_verification_algorithm'''
+        
+        # preliminary test
+        # not a identity element
+
+        identity_point = sys_para.I
+        assert public_key.x != identity_point.x or public_key.y != identity_point.y
+        
+        # verifying process
+        n = sys_para.q
+        assert r >= 1 and r < n
+        assert s >= 1 and s < n
+
+        z = e = hash.H1(mess)
+        inverse_s = eec.mod_inverse(s,n)
+        u1 = (z * inverse_s) % n
+        u2 = (r * inverse_s) % n
+
+        point1 = sys_para.G.__rmul__(u1)
+        point2 = public_key.__rmul__(u2)
+        new_point = point1.__add__(point2)
+
+        if (new_point.x == identity_point.x and
+            new_point.y == identity_point.y):
+            return False
+
+        if r != new_point.x.value % n:
+            return False
+
+        return True
 
 ### =================== EDGE_DRONE CLASS
 
