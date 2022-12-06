@@ -107,7 +107,7 @@ def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters):
     leader.__register_drone__(new_drone)
     r2 = leader.__random_number__()
     t_g = int(time.time())
-    V, cipher_list = leader.__gen_group_key__(sys_parameters, t_g)
+    V, cipher_list = leader.__re_key__(sys_parameters,new_drone ,t_g)
 
     ## sign and verify the message m2
     
@@ -120,7 +120,8 @@ def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters):
 def main():
     kgc, leader = initilize_entities(10)
     sys_para = set_up(kgc, leader)
-    V, cipher_list = key_gen_retrieval(leader, sys_para)
+    key_gen_retrieval(leader, sys_para)
+    group_re_key(kgc, leader, sys_para)
 
 if __name__ == '__main__':
     main()

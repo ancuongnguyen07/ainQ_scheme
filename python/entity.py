@@ -217,7 +217,7 @@ class Edge_Drone(Drone):
     def __assign_leader__(self, leader: "Leader"):
         self.q_k = leader
 
-    def __key_retrieval__(self,V: ECCPoint,cipher_list, t_g, para: Parameters):
+    def __key_retrieval__(self,V: ECCPoint,cipher_list, t_g: int, para: Parameters):
         '''Run by each edge drone d_i'''
         # ------- STEP 1
         T_i = V.__rmul__(self.x_i + self.s_i)
@@ -309,7 +309,7 @@ class Leader(Drone):
             h1_hash_feed = ','.join(list(map(str, [V,T_i,self.id,self.R_i,self.P_i,
                                                 drone.id,drone.R_i,drone.P_i,t])))
 
-            C_i = K_g ^ H1(h1_hash_feed)
+            C_i = self.K_g ^ H1(h1_hash_feed)
             cipher_lists[drone.id] = C_i
 
         return V, cipher_lists
@@ -322,9 +322,9 @@ class Leader(Drone):
 
         # ----- STEP 1
         temp_key = randint(0,q)
-        while K_g != None and temp_key == K_g:
+        while self.K_g != None and temp_key == self.K_g:
             temp_key = randint(0,q)
-        K_g = temp_key
+        self.K_g = temp_key
 
         # ----- STEP 2
         if new_drone != None:
@@ -332,14 +332,16 @@ class Leader(Drone):
             h0_hash_feed = ','.join(list(map(str, [new_drone.id,R_i,P_i])))
             Y_i = P_i.__add__(R_i.__add__(P_pub.__rmul__(H0(h0_hash_feed,q))))
             T_i = Y_i.__rmul__(self.l_k)
+            self.Y_i_list[new_drone.id] = Y_i
 
         cipher_list = {}
 
         # ----- STEP 3
         for drone in self.drone_list:
+            T_i = self.Y_i_list[drone.id].__rmul__(self.l_k)
             h1_hash_feed = ','.join(list(map(str, [self.V,T_i,self.id,self.R_i,self.P_i,
                                                 drone.id,drone.R_i,drone.P_i,t])))
-            C_i = K_g ^ H1(h1_hash_feed)
+            C_i = self.K_g ^ H1(h1_hash_feed)
             cipher_list[drone.id] = C_i
 
         return self.V, cipher_list
