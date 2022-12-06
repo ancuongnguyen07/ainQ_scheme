@@ -253,7 +253,7 @@ class Leader(Drone):
     drone_list: List[Drone] = None
 
     def __random_number__(self):
-        return randint(1,10000000)
+        return randint(1,1000000000000)
 
     def __register_drone__(self, edge_drone: Edge_Drone):
         '''Append a given drone to its drone list'''
