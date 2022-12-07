@@ -68,13 +68,19 @@ def key_gen_retrieval(leader: en.Leader, sys_parameters: en.Parameters):
     r1 = leader.__random_number__()
     ## key generation
     t_g = int(time.time())
+
+    start = time.time()
     V, cipher_list = leader.__gen_group_key__(sys_parameters, t_g)
+    end = time.time()
 
     ## sign and verify the message m1
     
     # need to be implemented in a separate file the sign/verify protocol
     mess_to_be_signed = ','.join(list(map(str, [r1,V,leader.K_g])))
     sign_and_verify(mess_to_be_signed, V, cipher_list, t_g, leader, sys_parameters)
+
+    print(f'GenGroupKey: {end-start:.3f}')
+
 
     return V, cipher_list
 
@@ -84,44 +90,55 @@ def sign_and_verify(mess: str,V, cipher_list,t_g,leader: en.Leader, sys_paramete
     Each edge drone verify the message using leader's public key
     Then it run key_retrieval algo
     '''
+    ## sign a message
     signature_r, signature_s = leader.__sign_mess__(mess, sys_parameters)
 
     ## key retrieval
     for edge_drone in leader.drone_list:
+        ## verify the signed message
         is_valid_signature = edge_drone.__verify_mess__(mess, signature_r, signature_s,
                                     leader.P_i, sys_parameters)
         assert is_valid_signature == True
         edge_drone.__key_retrieval__(V,cipher_list,t_g, sys_parameters)
 
-def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters):
+def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters, n: int):
     '''Group Re-Key phase'''
 
     # ====================== Group Re-Key
-    ## when a drone joins or leaves the group
-    new_drone = en.Edge_Drone('New drone')
-    new_drone.__gen_secret_value__(sys_parameters.q,sys_parameters.G)
+    for _ in range(n):
+        ## when a drone joins or leaves the group
+        new_id = len(leader.drone_list) + 1
+        new_drone = en.Edge_Drone(f'drone {new_id}')
+        new_drone.__gen_secret_value__(sys_parameters.q,sys_parameters.G)
 
-    drone_partial_key(kgc, new_drone, sys_parameters)
+        drone_partial_key(kgc, new_drone, sys_parameters)
 
-    ## update the group list then run the Re-key algorithms
-    leader.__register_drone__(new_drone)
-    r2 = leader.__random_number__()
-    t_g = int(time.time())
-    V, cipher_list = leader.__re_key__(sys_parameters,new_drone ,t_g)
+        ## update the group list then run the Re-key algorithms
+        leader.__register_drone__(new_drone)
+        r2 = leader.__random_number__()
+        t_g = int(time.time())
 
-    ## sign and verify the message m2
-    
-    # need to be implemented in a separate file the sign/verify protocol
-    mess_to_be_signed = ','.join(list(map(str, [r2,V,leader.K_g])))
-    sign_and_verify(mess_to_be_signed, V, cipher_list, t_g, leader, sys_parameters)
+        start = time.time()
+        V, cipher_list = leader.__re_key__(sys_parameters,new_drone ,t_g)
+        end = time.time()
+        print(f'Re_Key: {end-start:.3f}')
 
-    return cipher_list
+        ## sign and verify the message m2
+        
+        # need to be implemented in a separate file the sign/verify protocol
+        mess_to_be_signed = ','.join(list(map(str, [r2,V,leader.K_g])))
+        sign_and_verify(mess_to_be_signed, V, cipher_list, t_g, leader, sys_parameters)
 
 def main():
-    kgc, leader = initilize_entities(10)
-    sys_para = set_up(kgc, leader)
-    key_gen_retrieval(leader, sys_para)
-    group_re_key(kgc, leader, sys_para)
+    for num_ini_drones in [500, 1000, 1500, 2000]:
+        print(f'Number of existing drones: {num_ini_drones}')
+    # num_ini_drones = 1
+        num_new_drones = 1
+
+        kgc, leader = initilize_entities(num_ini_drones)
+        sys_para = set_up(kgc, leader)
+        key_gen_retrieval(leader, sys_para)
+        group_re_key(kgc, leader, sys_para, num_new_drones)
 
 if __name__ == '__main__':
     main()

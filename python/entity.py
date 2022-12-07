@@ -224,7 +224,7 @@ class Edge_Drone(Drone):
 
         # verify computation of T_i and Y_i, two components of K_g, were
         # correctly computed
-        assert para.G.__rmul__((self.s_i + self.x_i)*self.q_k.l_k) == self.q_k.Y_i_list[self.id].__rmul__(self.q_k.l_k)
+        # assert para.G.__rmul__((self.s_i + self.x_i)*self.q_k.l_k) == self.q_k.Y_i_list[self.id].__rmul__(self.q_k.l_k)
 
         # ------- STEP 2
         h1_hash_feed = ','.join(list(map(str, [V,T_i,self.q_k.id,self.q_k.R_i,self.q_k.P_i,
@@ -249,6 +249,7 @@ class Leader(Drone):
     l_k: int = None # random number for distributing group key
     V: ECCPoint = None
     Y_i_list: Dict[str, ECCPoint] = None
+    T_i_list: Dict[str, ECCPoint] = None
 
     drone_list: List[Drone] = None
 
@@ -278,6 +279,7 @@ class Leader(Drone):
         Generate a symmetric group session key
         '''
         self.Y_i_list = {}
+        self.T_i_list = {}
 
         q,G,H0,H1,P_pub = [common_para.q, common_para.G, common_para.H0,
                         common_para.H1,common_para.P_pub]
@@ -306,6 +308,8 @@ class Leader(Drone):
             self.Y_i_list[drone.id] = Y_i
             
             T_i = Y_i.__rmul__(l_k)
+            self.T_i_list[drone.id] = T_i
+
             h1_hash_feed = ','.join(list(map(str, [V,T_i,self.id,self.R_i,self.P_i,
                                                 drone.id,drone.R_i,drone.P_i,t])))
 
@@ -317,7 +321,6 @@ class Leader(Drone):
     def __re_key__(self, common_para: Parameters, new_drone: Drone, t: int):
         '''Re-generate group key whenever a new drone joins or an
         existing drone leaves'''
-
         q,P_pub,H0,H1 = common_para.q, common_para.P_pub,common_para.H0,common_para.H1
 
         # ----- STEP 1
@@ -333,12 +336,13 @@ class Leader(Drone):
             Y_i = P_i.__add__(R_i.__add__(P_pub.__rmul__(H0(h0_hash_feed,q))))
             T_i = Y_i.__rmul__(self.l_k)
             self.Y_i_list[new_drone.id] = Y_i
+            self.T_i_list[new_drone.id] = T_i
 
         cipher_list = {}
 
         # ----- STEP 3
         for drone in self.drone_list:
-            T_i = self.Y_i_list[drone.id].__rmul__(self.l_k)
+            T_i = self.T_i_list[drone.id]
             h1_hash_feed = ','.join(list(map(str, [self.V,T_i,self.id,self.R_i,self.P_i,
                                                 drone.id,drone.R_i,drone.P_i,t])))
             C_i = self.K_g ^ H1(h1_hash_feed)
