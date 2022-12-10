@@ -1,7 +1,7 @@
 import entity as en
 import time
 
-def initilize_entities(n):
+def initialize_entities(n):
     '''Create involving entities: KGC, team leader, `n` number of edge drones'''
     # create a new KGC entity
     kgc = en.KGC()
@@ -9,15 +9,11 @@ def initilize_entities(n):
     # create a team leader
     leader = en.Leader('leader A')
 
-    # create a list of 10 edge drones
-    drone_list = []
+    # create a list of n edge drones
     for i in range(n):
-        id = f'drone {i+1}'
+        id = f'{i+1}'
         new_drone = en.Edge_Drone(id=id)
-        new_drone.__assign_leader__(leader)
-        drone_list.append(new_drone)
-
-    leader.drone_list = drone_list
+        leader.__register_drone__(new_drone)
 
     return kgc, leader
 
@@ -51,6 +47,11 @@ def set_up(kgc: en.KGC, leader: en.Leader):
     # edge drones receive partial private and public keys
     for edge_drone in leader.drone_list:
         drone_partial_key(kgc, edge_drone, sys_parameters)
+        id = edge_drone.id
+        en.print_section_separate_head()
+        print(f"Drone {id}'s Partial Secret key: {edge_drone.s_i}")
+        print(f"Drone {id}'s Partial Public key: {edge_drone.R_i}")
+        en.print_section_separate_tail()
 
     ## each registered drone runs the GenPrivKey and GenPubKey to generate
     ## a full public/private key pair.
@@ -73,14 +74,13 @@ def key_gen_retrieval(leader: en.Leader, sys_parameters: en.Parameters):
     V, cipher_list = leader.__gen_group_key__(sys_parameters, t_g)
     end = time.time()
 
+    # print(f'GenGroupKey: {end-start:.3f}')
+    
     ## sign and verify the message m1
     
     # need to be implemented in a separate file the sign/verify protocol
     mess_to_be_signed = ','.join(list(map(str, [r1,V,leader.K_g])))
     sign_and_verify(mess_to_be_signed, V, cipher_list, t_g, leader, sys_parameters)
-
-    print(f'GenGroupKey: {end-start:.3f}')
-
 
     return V, cipher_list
 
@@ -91,14 +91,14 @@ def sign_and_verify(mess: str,V, cipher_list,t_g,leader: en.Leader, sys_paramete
     Then it run key_retrieval algo
     '''
     ## sign a message
-    signature_r, signature_s = leader.__sign_mess__(mess, sys_parameters)
+    # signature_r, signature_s = leader.__sign_mess__(mess, sys_parameters)
 
     ## key retrieval
     for edge_drone in leader.drone_list:
         ## verify the signed message
-        is_valid_signature = edge_drone.__verify_mess__(mess, signature_r, signature_s,
-                                    leader.P_i, sys_parameters)
-        assert is_valid_signature == True
+        # is_valid_signature = edge_drone.__verify_mess__(mess, signature_r, signature_s,
+        #                             leader.P_i, sys_parameters)
+        # assert is_valid_signature == True
         edge_drone.__key_retrieval__(V,cipher_list,t_g, sys_parameters)
 
 def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters, n: int):
@@ -121,7 +121,7 @@ def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters, 
         start = time.time()
         V, cipher_list = leader.__re_key__(sys_parameters,new_drone ,t_g)
         end = time.time()
-        print(f'Re_Key: {end-start:.3f}')
+        # print(f'Re_Key: {end-start:.3f}')
 
         ## sign and verify the message m2
         
@@ -130,15 +130,18 @@ def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters, 
         sign_and_verify(mess_to_be_signed, V, cipher_list, t_g, leader, sys_parameters)
 
 def main():
-    for num_ini_drones in [500, 1000, 1500, 2000]:
-        print(f'Number of existing drones: {num_ini_drones}')
-    # num_ini_drones = 1
-        num_new_drones = 1
+    print('='*10 + ' Welcome to AinQ protocol using the secp256k1 elliptic curve ' + '='*10)
 
-        kgc, leader = initilize_entities(num_ini_drones)
-        sys_para = set_up(kgc, leader)
-        key_gen_retrieval(leader, sys_para)
-        group_re_key(kgc, leader, sys_para, num_new_drones)
+    num_ini_drones = 1
+
+    # print(f'Number of existing drones: {num_ini_drones}')
+    num_new_drones = 1
+
+    kgc, leader = initialize_entities(num_ini_drones)
+    sys_para = set_up(kgc, leader)
+
+    key_gen_retrieval(leader, sys_para)
+    # group_re_key(kgc, leader, sys_para, num_new_drones)
 
 if __name__ == '__main__':
     main()

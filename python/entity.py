@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from dataclasses import field
 from random import randint
 import EC_operation as ec
 from common_parameters import Parameters
@@ -7,6 +8,14 @@ from typing import Dict
 from typing import List
 import hash_func as hash
 import eec
+
+def print_section_separate_head():
+    print('='*60)
+    print()
+
+def print_section_separate_tail():
+    print()
+    print('='*60)
 
 ### ====================== KGC CLASS
 
@@ -20,6 +29,10 @@ class KGC:
         Generate system necessary parameters for cryptographic scheme
         Return a class of Parameters
         '''
+        print()
+        print('Set up system parameters...')
+        print()
+
         # Code below is provided by course staffs
         # ------ STEP 1
         # Using the secp256k1 elliptic curve equation: yˆ2 = xˆ3 + 7
@@ -57,6 +70,11 @@ class KGC:
         x = randint(0, q)
         P_pub = G.__rmul__(x)
 
+        print_section_separate_head()
+        print(f"KGC's Secret value: {x}")
+        print(f"KGC's Public value: {P_pub}")
+        print_section_separate_tail()
+
         # ----- STEP 4
         # I implement a hash function in a separate file: hash_func.py
         H0 = hash.HASH_FUNC_DICT['H0']
@@ -74,6 +92,10 @@ class KGC:
         Generate a partial key pair for each drone d_i
         Return R_i, s_i
         '''
+        print()
+        print(f'Generate partial key, running by KGC...')
+        print()
+
         x,q,G,H0 = common_para.x, common_para.q, common_para.G, common_para.H0
 
         # ---- STEP 1
@@ -82,16 +104,14 @@ class KGC:
 
         # ---- STEP 2
         # partial public key
+        # R_i = r_i*G
         R_i = G.__rmul__(r_i)
 
         # ---- STEP 3
         # partial secret key
+        # s_i = r_i + x*H0(d_i,R_i,P_i) mod q
         hash_feed = ','.join(list(map(str, [id_d_i, R_i, P_i])))
         s_i = r_i + x * H0(hash_feed, q) % q
-
-        # save R_i and s_i into variables of class Edge_Drone d_i
-        # d_i.s_i = s_i
-        # d_i.R_i = R_i
 
         return R_i, s_i
 
@@ -110,16 +130,26 @@ class Drone:
         Run by each edge drone and a team leader
         Generate a pair of secret/public key for each edge drone d_i or team leader
         '''
+        print()
+        print(f'Generate secret values for Drone {self.id}...')
+        print()
+
         # ---- STEP 1
         # generate a secret key
         x_i = randint(0,q)
 
         # ---- STEP 2
         # compute corresponding public key
+        # P_i = x_i*G
         P_i = G.__rmul__(x_i)
 
         self.x_i = x_i
         self.P_i = P_i
+
+        print_section_separate_head()
+        print(f"Drone {self.id}'s Secret value: {x_i}")
+        print(f"Drone {self.id}'s Public value: {P_i}")
+        print_section_separate_tail()
 
         return x_i, P_i
 
@@ -143,8 +173,10 @@ class Drone:
         return full_priv_key, full_pub_key
 
     def __sign_mess__(self,mess: str, sys_para: Parameters):
-        '''Sign a message using ECDSA
-        Reference: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm#Signature_generation_algorithm'''
+        '''
+        Sign a message using ECDSA
+        Reference: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm#Signature_generation_algorithm
+        '''
         
         # order n of base point
         n = sys_para.q
@@ -173,8 +205,10 @@ class Drone:
 
     def __verify_mess__(self, mess: str, r: int,s: int ,public_key: ECCPoint,
                         sys_para: Parameters):
-        '''Verify a signed message using ECDSA
-        Reference: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm#Signature_verification_algorithm'''
+        '''
+        Verify a signed message using ECDSA
+        Reference: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm#Signature_verification_algorithm
+        '''
         
         # preliminary test
         # not a identity element
@@ -219,7 +253,12 @@ class Edge_Drone(Drone):
 
     def __key_retrieval__(self,V: ECCPoint,cipher_list, t_g: int, para: Parameters):
         '''Run by each edge drone d_i'''
+        print()
+        print(f'Key retrieval by Drone {self.id}...')
+        print()
+
         # ------- STEP 1
+        # T_i = (s_i + x_i)*V
         T_i = V.__rmul__(self.x_i + self.s_i)
 
         # verify computation of T_i and Y_i, two components of K_g, were
@@ -227,9 +266,14 @@ class Edge_Drone(Drone):
         # assert para.G.__rmul__((self.s_i + self.x_i)*self.q_k.l_k) == self.q_k.Y_i_list[self.id].__rmul__(self.q_k.l_k)
 
         # ------- STEP 2
+        # K_g = C_i XOR H1(V,T_i,q_k,pk_k,d_i,pk_i,t_g)
         h1_hash_feed = ','.join(list(map(str, [V,T_i,self.q_k.id,self.q_k.R_i,self.q_k.P_i,
                                                 self.id,self.R_i,self.P_i,t_g])))
         K_g = cipher_list[self.id] ^ para.H1(h1_hash_feed)
+
+        print_section_separate_tail()
+        print(f'Group Key retrieved: {K_g}')
+        print_section_separate_tail()
 
         # verify the group key is identical in all drones
         assert K_g == self.q_k.K_g
@@ -248,10 +292,10 @@ class Leader(Drone):
     K_g: int = None # group key
     l_k: int = None # random number for distributing group key
     V: ECCPoint = None
-    Y_i_list: Dict[str, ECCPoint] = None
-    T_i_list: Dict[str, ECCPoint] = None
+    # Y_i_list: Dict[str, ECCPoint] = {}
+    T_i_list: Dict[str, ECCPoint] = field(default_factory=dict)
 
-    drone_list: List[Drone] = None
+    drone_list: List[Drone] = field(default_factory=list)
 
     def __random_number__(self):
         return randint(1,1000000000000)
@@ -276,15 +320,17 @@ class Leader(Drone):
     def __gen_group_key__(self, common_para: Parameters, t: int):
         '''
         Run by team leader
-        Generate a symmetric group session key
+        Generate a symmetric group session key K_g
         '''
-        self.Y_i_list = {}
-        self.T_i_list = {}
+        print()
+        print('Generate group session key...')
+        print()
 
         q,G,H0,H1,P_pub = [common_para.q, common_para.G, common_para.H0,
                         common_para.H1,common_para.P_pub]
 
         # ----- STEP 1
+        # Choose K_g and l_k at random
         K_g = randint(0,q)
         l_k = randint(0,q)
 
@@ -292,57 +338,96 @@ class Leader(Drone):
         self.l_k = l_k
 
         # ----- STEP 2
+        # V = l_k*G
         V = G.__rmul__(l_k)
         self.V = V
 
+        print_section_separate_head()
+        print(f'Group Session key: {K_g}')
+        print(f'l_k: {l_k}')
+        print(f'V: {V}')
+        print_section_separate_tail()
+
         cipher_lists = {}
 
+        print_section_separate_head()
+        print('Generate Y_i,T_i, and C_i')
         for drone in self.drone_list:
+            print()
+            print(f'Drone {drone.id}')
+            print()
+
             # ----- STEP 3
+            # for each pk_i as (R_i,P_i)
             R_i, P_i = drone.R_i, drone.P_i
 
             # ----- STEP 4
+            # Y_i = R_i + H0(d_i,R_i,P_i)*P_pub + P_i
             h0_hash_feed = ','.join(list(map(str, [drone.id, R_i, P_i])))
             Y_i = P_i.__add__(R_i.__add__(P_pub.__rmul__(H0(h0_hash_feed, q))))
-
-            self.Y_i_list[drone.id] = Y_i
             
+            print(f'Y_i: {Y_i}')
+
+            # self.Y_i_list[drone.id] = Y_i
+            
+            # T_i = l_k*Y_i
             T_i = Y_i.__rmul__(l_k)
             self.T_i_list[drone.id] = T_i
 
+            print(f'T_i: {T_i}')
+
+            # C_i = K_g XOR H1(V,T_i,q_k,pk_k,d_i,pk_i,t_g)
             h1_hash_feed = ','.join(list(map(str, [V,T_i,self.id,self.R_i,self.P_i,
                                                 drone.id,drone.R_i,drone.P_i,t])))
-
             C_i = self.K_g ^ H1(h1_hash_feed)
+
+            print(f'C_i: {C_i}')
+            print_section_separate_tail()
+
             cipher_lists[drone.id] = C_i
 
         return V, cipher_lists
 
     def __re_key__(self, common_para: Parameters, new_drone: Drone, t: int):
-        '''Re-generate group key whenever a new drone joins or an
-        existing drone leaves'''
+        '''
+        Re-generate group key whenever a new drone joins or an
+        existing drone leaves
+        '''
+        print()
+        print('Re-generate group session key...')
+        print()
+
         q,P_pub,H0,H1 = common_para.q, common_para.P_pub,common_para.H0,common_para.H1
 
         # ----- STEP 1
+        # Choose a new group key K'_g
         temp_key = randint(0,q)
         while self.K_g != None and temp_key == self.K_g:
             temp_key = randint(0,q)
         self.K_g = temp_key
 
         # ----- STEP 2
+        # if d_i is a new drone
         if new_drone != None:
             R_i, P_i = new_drone.R_i, new_drone.P_i
+
+            # Y_i = R_i + H0(d_i,R_i,P_i)*P_pub + P_i
             h0_hash_feed = ','.join(list(map(str, [new_drone.id,R_i,P_i])))
             Y_i = P_i.__add__(R_i.__add__(P_pub.__rmul__(H0(h0_hash_feed,q))))
+
+            # T_i = l_k*Y_i
             T_i = Y_i.__rmul__(self.l_k)
-            self.Y_i_list[new_drone.id] = Y_i
+            # self.Y_i_list[new_drone.id] = Y_i
             self.T_i_list[new_drone.id] = T_i
 
         cipher_list = {}
 
         # ----- STEP 3
+        # generate new C'_i for each edge drone
         for drone in self.drone_list:
             T_i = self.T_i_list[drone.id]
+            
+            # C_i = K_g XOR H1(V,T_i,q_k,pk_k,d_i,pk_i,t_g)
             h1_hash_feed = ','.join(list(map(str, [self.V,T_i,self.id,self.R_i,self.P_i,
                                                 drone.id,drone.R_i,drone.P_i,t])))
             C_i = self.K_g ^ H1(h1_hash_feed)
