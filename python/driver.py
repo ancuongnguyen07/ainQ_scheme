@@ -48,10 +48,10 @@ def set_up(kgc: en.KGC, leader: en.Leader):
     for edge_drone in leader.drone_list:
         drone_partial_key(kgc, edge_drone, sys_parameters)
         id = edge_drone.id
-        en.print_section_separate_head()
-        print(f"Drone {id}'s Partial Secret key: {edge_drone.s_i}")
-        print(f"Drone {id}'s Partial Public key: {edge_drone.R_i}")
-        en.print_section_separate_tail()
+        # en.print_section_separate_head()
+        # print(f"Drone {id}'s Partial Secret key: {edge_drone.s_i}")
+        # print(f"Drone {id}'s Partial Public key: {edge_drone.R_i}")
+        # en.print_section_separate_tail()
 
     ## each registered drone runs the GenPrivKey and GenPubKey to generate
     ## a full public/private key pair.
@@ -74,7 +74,7 @@ def key_gen_retrieval(leader: en.Leader, sys_parameters: en.Parameters):
     V, cipher_list = leader.__gen_group_key__(sys_parameters, t_g)
     end = time.time()
 
-    # print(f'GenGroupKey: {end-start:.3f}')
+    print(f'GenGroupKey: {end-start:.3f}')
     
     ## sign and verify the message m1
     
@@ -121,7 +121,7 @@ def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters, 
         start = time.time()
         V, cipher_list = leader.__re_key__(sys_parameters,new_drone ,t_g)
         end = time.time()
-        # print(f'Re_Key: {end-start:.3f}')
+        print(f'Re_Key: {end-start:.3f}')
 
         ## sign and verify the message m2
         
@@ -132,16 +132,16 @@ def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters, 
 def main():
     print('='*10 + ' Welcome to AinQ protocol using the secp256k1 elliptic curve ' + '='*10)
 
-    num_ini_drones = 1
+    num_ini_drones = 1000
 
-    # print(f'Number of existing drones: {num_ini_drones}')
+    print(f'Number of existing drones: {num_ini_drones}')
     num_new_drones = 1
 
     kgc, leader = initialize_entities(num_ini_drones)
     sys_para = set_up(kgc, leader)
 
     key_gen_retrieval(leader, sys_para)
-    # group_re_key(kgc, leader, sys_para, num_new_drones)
+    group_re_key(kgc, leader, sys_para, num_new_drones)
 
 if __name__ == '__main__':
     main()
