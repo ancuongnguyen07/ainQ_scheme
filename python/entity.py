@@ -388,7 +388,7 @@ class Leader(Drone):
 
         return V, cipher_lists
 
-    def __re_key__(self, common_para: Parameters, new_drone: Drone, t: int):
+    def __re_key__(self, common_para: Parameters, new_drone_list: List[Drone], t: int):
         '''
         Re-generate group key whenever a new drone joins or an
         existing drone leaves
@@ -408,7 +408,7 @@ class Leader(Drone):
 
         # ----- STEP 2
         # if d_i is a new drone
-        if new_drone != None:
+        for new_drone in new_drone_list:
             R_i, P_i = new_drone.R_i, new_drone.P_i
 
             # Y_i = R_i + H0(d_i,R_i,P_i)*P_pub + P_i

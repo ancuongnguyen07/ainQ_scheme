@@ -34,7 +34,11 @@ def set_up(kgc: en.KGC, leader: en.Leader):
 
     ## each registered drone runs the GenSecretValue
     q,G = sys_parameters.q, sys_parameters.G
+    # start = time.time()
     leader.__gen_secret_value__(q, G)
+    # end = time.time()
+    # print(f'GenSecretValue: {end-start:.3f} s')
+
     for edge_drone in leader.drone_list:
         edge_drone.__gen_secret_value__(q, G)
 
@@ -70,11 +74,11 @@ def key_gen_retrieval(leader: en.Leader, sys_parameters: en.Parameters):
     ## key generation
     t_g = int(time.time())
 
-    start = time.time()
+    # start = time.time()
     V, cipher_list = leader.__gen_group_key__(sys_parameters, t_g)
-    end = time.time()
+    # end = time.time()
 
-    print(f'GenGroupKey: {end-start:.3f}')
+    # print(f'GenGroupKey: {end-start:.3f}')
     
     ## sign and verify the message m1
     
@@ -99,14 +103,18 @@ def sign_and_verify(mess: str,V, cipher_list,t_g,leader: en.Leader, sys_paramete
         # is_valid_signature = edge_drone.__verify_mess__(mess, signature_r, signature_s,
         #                             leader.P_i, sys_parameters)
         # assert is_valid_signature == True
+        # start = time.time()
         edge_drone.__key_retrieval__(V,cipher_list,t_g, sys_parameters)
+        # end = time.time()
+        # print(f'KeyRetrieval: {end-start:.3f} s')
 
 def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters, n: int):
     '''Group Re-Key phase'''
 
     # ====================== Group Re-Key
+    new_drone_list = []
     for _ in range(n):
-        ## when a drone joins or leaves the group
+        ## when a drone joins the group
         new_id = len(leader.drone_list) + 1
         new_drone = en.Edge_Drone(f'drone {new_id}')
         new_drone.__gen_secret_value__(sys_parameters.q,sys_parameters.G)
@@ -115,27 +123,30 @@ def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters, 
 
         ## update the group list then run the Re-key algorithms
         leader.__register_drone__(new_drone)
-        r2 = leader.__random_number__()
-        t_g = int(time.time())
+        new_drone_list.append(new_drone)
 
-        start = time.time()
-        V, cipher_list = leader.__re_key__(sys_parameters,new_drone ,t_g)
-        end = time.time()
-        print(f'Re_Key: {end-start:.3f}')
+    r2 = leader.__random_number__()
+    t_g = int(time.time())
 
-        ## sign and verify the message m2
-        
-        # need to be implemented in a separate file the sign/verify protocol
-        mess_to_be_signed = ','.join(list(map(str, [r2,V,leader.K_g])))
-        sign_and_verify(mess_to_be_signed, V, cipher_list, t_g, leader, sys_parameters)
+    # start = time.time()
+    V, cipher_list = leader.__re_key__(sys_parameters,new_drone_list,t_g)
+    # end = time.time()
+    # print(f'Re_Key: {end-start:.3f}')
+
+    ## sign and verify the message m2
+    
+    # need to be implemented in a separate file the sign/verify protocol
+    mess_to_be_signed = ','.join(list(map(str, [r2,V,leader.K_g])))
+    sign_and_verify(mess_to_be_signed, V, cipher_list, t_g, leader, sys_parameters)
 
 def main():
     print('='*10 + ' Welcome to AinQ protocol using the secp256k1 elliptic curve ' + '='*10)
 
-    num_ini_drones = 1000
+    num_ini_drones = 1
 
-    print(f'Number of existing drones: {num_ini_drones}')
+    # print(f'Number of existing drones: {num_ini_drones}')
     num_new_drones = 1
+    # print(f'Number of new drones: {num_new_drones}')
 
     kgc, leader = initialize_entities(num_ini_drones)
     sys_para = set_up(kgc, leader)
