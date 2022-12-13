@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-MAIN=answer_sheet
+MAIN=report
 TEXSRC=$(wildcard *.tex)
 DIR_BUILD=build
 OPT= --interaction=nonstopmode
