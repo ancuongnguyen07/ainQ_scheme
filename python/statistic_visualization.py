@@ -16,6 +16,7 @@ with open(CSV_file, 'r', encoding='utf-8') as csv_file:
         re_key_time.append(re_key)
 
 # plotting a line graph
+plt.rcParams.update({'font.size': 14})
 plt.figure()
 plt.plot(num_drones, gen_group_key_time, '-bo', label='GenGroupKey')
 plt.plot(num_drones, re_key_time, '-ro', label='Re-Key')
@@ -26,7 +27,7 @@ plt.xlabel('Number of Edge Drones')
 plt.ylabel('Time (s)')
 plt.xticks([0,500,1000,1500,2000])
 # plt.title('Performance of Team Leader')
-plt.legend()
+plt.legend(prop={'size': 16})
 plt.grid(axis='y')
 
 plt.show()
