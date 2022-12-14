@@ -1,4 +1,7 @@
 # Re-implement the AinQ Scheme
+This project is a part of the COMP.SEC.220 Security Protocol course organized by the Tampere University,
+Tampere, Finland.
+
 In this work, I try to implement the AinQ scheme, a certificateless group key distribution protocol.
 In addition, I replicate the experiment results which are shown in the academic paper
 _**Arrows in a Quiver: A Secure Certificateless Group Key Distribution Protocol for Drones**_
@@ -14,13 +17,13 @@ python driver.py -e <number_of_existing_edge_drones> -n <number_of_new_drones> [
 For example, you want to run the protocol with 10 initial edge drones and then 100 new
 drones will join the existing group. The script runs in a silent mode without the flag `-v`
 ```
-python driver.py -e 10 -n 100
+python driver_ainQ.py -e 10 -n 100
 ```
 
 Run the below command for more detail argument description.
 ```
-$ python driver.py -h
-usage: driver.py [-h] -e EXISTING_DRONE -n NEW_DRONE [-v]
+$ python driver_ainQ.py -h
+usage: driver_ainQ.py [-h] -e EXISTING_DRONE -n NEW_DRONE [-v]
 
 optional arguments:
   -h, --help            show this help message and exit
