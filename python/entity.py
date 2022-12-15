@@ -72,8 +72,12 @@ class KGC:
             print()
 
             print_section_separate_head()
-            print(f"KGC's Secret value: {x}")
-            print(f"KGC's Public value: {P_pub}")
+            print(f'Generator point: {G}')
+            print()
+            print(f'q: {hex(q)}')
+            print()
+            print(f"KGC's Secret value x: {hex(x)}")
+            print(f"KGC's Public value P_pub: {P_pub}")
             print_section_separate_tail()
 
         # ----- STEP 4
@@ -93,10 +97,6 @@ class KGC:
         Generate a partial key pair for each drone d_i
         Return R_i, s_i
         '''
-        if verbose:
-            print()
-            print(f'Generate partial key, running by KGC...')
-            print()
 
         x,q,G,H0 = common_para.x, common_para.q, common_para.G, common_para.H0
 
@@ -114,6 +114,15 @@ class KGC:
         # s_i = r_i + x*H0(d_i,R_i,P_i) mod q
         hash_feed = ','.join(list(map(str, [id_d_i, R_i, P_i])))
         s_i = r_i + x * H0(hash_feed, q) % q
+
+        if verbose:
+            print()
+            print(f'Generate partial key for Drone {id_d_i}, running by KGC...')
+            print()
+
+            print(f"Drone {id_d_i}'s partial public key R_i: {R_i}")
+            print(f"Drone {id_d_i}'s partial secret key s_i: {hex(s_i)}")
+            print_section_separate_tail()
 
         return R_i, s_i
 
@@ -151,8 +160,8 @@ class Drone:
             print()
 
             print_section_separate_head()
-            print(f"Drone {self.id}'s Secret value: {x_i}")
-            print(f"Drone {self.id}'s Public value: {P_i}")
+            print(f"Drone {self.id}'s Secret value x_i: {hex(x_i)}")
+            print(f"Drone {self.id}'s Public value P_i: {P_i}")
             print_section_separate_tail()
 
         return x_i, P_i
@@ -278,7 +287,7 @@ class Edge_Drone(Drone):
             print()
 
             print_section_separate_tail()
-            print(f'Group Key retrieved: {K_g}')
+            print(f'Group Key retrieved: {hex(K_g)}')
             print_section_separate_tail()
 
         # verify the group key is identical in all drones
@@ -350,8 +359,8 @@ class Leader(Drone):
             print()
 
             print_section_separate_head()
-            print(f'Group Session key: {K_g}')
-            print(f'l_k: {l_k}')
+            print(f'Group Session key K_g: {hex(K_g)}')
+            print(f'l_k: {hex(l_k)}')
             print(f'V: {V}')
             print_section_separate_tail()
 
@@ -389,7 +398,7 @@ class Leader(Drone):
                 print(f'Y_i: {Y_i}')
                 print(f'T_i: {T_i}')
 
-                print(f'C_i: {C_i}')
+                print(f'C_i: {hex(C_i)}')
                 print_section_separate_tail()
 
             cipher_lists[drone.id] = C_i
@@ -415,7 +424,7 @@ class Leader(Drone):
             print('Re-generate group session key...')
             print()
 
-            print(f'New group session key: {self.K_g}')
+            print(f'New group session key: {hex(self.K_g)}')
             print()
 
         # ----- STEP 2
@@ -444,5 +453,9 @@ class Leader(Drone):
                                                 drone.id,drone.R_i,drone.P_i,t])))
             C_i = self.K_g ^ H1(h1_hash_feed)
             cipher_list[drone.id] = C_i
+
+            if verbose:
+                print()
+                print(f"Drone {drone.id}'s C'_i: {hex(C_i)}")
 
         return self.V, cipher_list

@@ -30,6 +30,11 @@ def set_up(kgc: en.KGC, leader: en.Leader, verbose: bool):
 
     # ====================== Setup and Initialization
     
+    if verbose:
+        print()
+        print('------------Setup and Initialization Phase------------')
+        print()
+
     ## system parameters of the protocol
     sys_parameters = kgc.__setup__(verbose)
 
@@ -38,7 +43,7 @@ def set_up(kgc: en.KGC, leader: en.Leader, verbose: bool):
     start = time.time()
     leader.__gen_secret_value__(q, G, verbose)
     end = time.time()
-    print(f'GenSecretValue: {end-start:.3f} s')
+    print(f'GenSecretValue: {end-start:.3f} seconds')
 
     for edge_drone in leader.drone_list:
         edge_drone.__gen_secret_value__(q, G, verbose)
@@ -64,6 +69,11 @@ def set_up(kgc: en.KGC, leader: en.Leader, verbose: bool):
 def key_gen_retrieval(leader: en.Leader, sys_parameters: en.Parameters,verbose: bool):
     '''Key Generation and Retrieval phase'''
 
+    if verbose:
+        print()
+        print('------------Key Generation and Retrieval Phase------------')
+        print()
+
     # ====================== Key Generation and Retrieval
     ## random number used for signature authentication
     r1 = leader.__random_number__()
@@ -74,7 +84,7 @@ def key_gen_retrieval(leader: en.Leader, sys_parameters: en.Parameters,verbose: 
     V, cipher_list = leader.__gen_group_key__(sys_parameters, t_g, verbose)
     end = time.time()
 
-    print(f'GenGroupKey: {end-start:.3f}')
+    print(f'GenGroupKey: {end-start:.3f} seconds')
     
     ## sign and verify the message m1
     
@@ -93,22 +103,43 @@ def key_retrieval_phase(mess: str,V, cipher_list,t_g,leader: en.Leader,
     '''
     ## sign a message
     signature_r, signature_s = leader.__sign_mess__(mess, sys_parameters)
+    if verbose:
+        print()
+        print('------------Key Retrieval Phase------------')
+        print()
+        print('Sign and verify digital signature...')
+        print(f'Message signature: ({hex(signature_r)},{hex(signature_s)})')
+        print('The Leader now sends the broadcast message and the signature to all edge drones...')
+        print()
 
     ## key retrieval
     for edge_drone in leader.drone_list:
         ## verify the signed message
+        if verbose:
+            en.print_section_separate_head()
+            print(f'Drone {edge_drone.id} received the broadcast message')
+            print(f'Drone {edge_drone.id} is verifying the signature...')
         is_valid_signature = edge_drone.__verify_mess__(mess, signature_r, signature_s,
                                     leader.P_i, sys_parameters)
         assert is_valid_signature == True
+        if verbose:
+            print('The signature is valid!')
 
         start = time.time()
         edge_drone.__key_retrieval__(V,cipher_list,t_g, sys_parameters,verbose)
         end = time.time()
-        print(f'KeyRetrieval (drone {edge_drone.id}): {end-start:.3f} s')
+        print(f'KeyRetrieval (drone {edge_drone.id}): {end-start:.3f} seconds')
 
 def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters,
                 n: int, verbose: bool):
     '''Group Re-Key phase'''
+
+    if verbose:
+        print()
+        print('------------Group Re-Key Phase------------')
+        en.print_section_separate_head()
+        print('New drones join the group...')
+        print()
 
     # ====================== Group Re-Key
     new_drone_list = []
@@ -130,7 +161,8 @@ def group_re_key(kgc: en.KGC, leader: en.Leader, sys_parameters: en.Parameters,
     start = time.time()
     V, cipher_list = leader.__re_key__(sys_parameters,new_drone_list,t_g,verbose)
     end = time.time()
-    print(f'Re_Key: {end-start:.3f}')
+    print(f'Re_Key: {end-start:.3f} seconds')
+    en.print_section_separate_tail()
 
     ## sign and verify the message m2
     
@@ -158,7 +190,7 @@ def main():
     if verbose:
         print('='*10 + ' Welcome to AinQ protocol using the secp256k1 elliptic curve ' + '='*10)
 
-        print(f'Number of existing drones: {num_ini_drones}')
+        print(f'Number of initializing drones: {num_ini_drones}')
         print(f'Number of new drones: {num_new_drones}')
 
     # starting a protocol
@@ -166,7 +198,7 @@ def main():
     sys_para = set_up(kgc, leader,verbose)
 
     key_gen_retrieval(leader, sys_para,verbose)
-    group_re_key(kgc, leader, sys_para, num_new_drones,verbose)
+    group_re_key(kgc, leader, sys_para, num_new_drones, verbose)
 
 if __name__ == '__main__':
     main()
